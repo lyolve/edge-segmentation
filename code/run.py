@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 from utils import *
 import copy
+import numpy as np
 
 pic_path = '../data/'
 pics = os.listdir(pic_path)
@@ -43,6 +44,9 @@ show_matrix("closed", pic_closed_2)
 pic_input = copy.copy(pic_closed_2)
 connected_points = []
 domain = []
+area = 20
+WH_Ratio = 3
+
 for row in pic_input.shape[0]:
     for col in pic_input.shape[1]:
         if pic_input[row, col] == 255:
@@ -50,22 +54,73 @@ for row in pic_input.shape[0]:
             while len(connected_points) != 0:
                 current_point = connected_points[-1]
                 domain.append(current_point)
-                col_num = current_point[1]
                 row_num = current_point[0]
+                col_num = current_point[1]
                 pic_input[row_num, col_num] = 0
                 connected_points.pop()
 
+                # case1 = row_num-1 >= 0 and col_num-1 >= 0 and pic_input[row_num-1, col_num-1] == 255
+                # case2 = row_num-1 >= 0 and pic_input[row_num-1, col_num] == 255
+                # case3 = row_num-1 >= 0 and col_num+1 < pic_input.shape[1] and pic_input[row_num-1, col_num+1] == 255
+                # case4 = col_num-1 >= 0 and pic_input[row_num, col_num-1] == 255
+                # case5 = col_num+1 < pic_input.shape[1] and pic_input[row_num, col_num+1] == 255
+                # case6 = row_num+1 < pic_input.shape[0] and col_num-1 > 0 and pic_input[row_num+1, col_num-1] == 255
+                # case7 = row_num+1 < pic_input.shape[0] and pic_input[row_num+1, col_num] == 255
+                # case8 = row_num+1 < pic_input.shape[0] and col_num+1 < pic_input.shape[1] and pic_input[row_num+1, col_num+1] == 255
+                
+                # find a white point
                 case1 = row_num >= 0 and col_num >= 0 and pic_input[row_num, col_num] == 255
-                case2 = row_num >= 0 and col_num >= 0 and pic_input[row_num, col_num] == 255
+                # 1 right pixel is white
+                case2 = row_num >= 0 and pic_input[row_num, col_num+1] == 255
+                # col by the right_edge
+                case3 = row_num >= 0 and col_num + 2 < pic_input.shape[1] and pic_input[row_num, col_num + 2] == 255
+                # 1 up pixel is white
+                case4 = col_num >= 0 and pic_input[row_num-1, col_num] == 255
+                # col by the right_edge
+                case5 = col_num + 2 < pic_input.shape[1] and pic_input[row_num + 1, col_num + 2] == 255
+                # row by the down_edge
+                case6 = row_num + 2 < pic_input.shape[0] and col_num > 0 and pic_input[row_num + 2, col_num] == 255
+                # 1 right pixel is white
+                case7 = row_num + 2 < pic_input.shape[0] and pic_input[row_num + 2, col_num + 1] == 255
+                # right & down corner
+                case8 = row_num + 2 < pic_input.shape[0] and col_num + 2 < pic_input.shape[1] and pic_input[row_num + 2, col_num + 2] == 255
 
                 if case1:
                     pic_input[row_num, col_num] = 0
-                    connected_points.append((row, col))
+                    connected_points.append([row_num, col_num])
+                if case2:
+                    pic_input[row_num, col_num+1] = 0
+                    connected_points.append([row_num, col_num+1])
+                if case3:
+                    pic_input[row_num, col_num + 2] = 0
+                    connected_points.append([row_num, col_num + 2])
+                if case4:
+                    pic_input[row_num - 1, col_num] = 0
+                    connected_points.append([row_num - 1, col_num])
+                if case5:
+                    pic_input[row_num + 1, col_num + 2] = 0
+                    connected_points.append([row_num + 1, col_num + 2])
+                if case6:
+                    pic_input[row_num + 2, col_num] = 0
+                    connected_points.append([row_num + 1, col_num + 2])
+                if case7:
+                    pic_input[row_num + 2, col_num + 1] = 0
+                    connected_points.append([row_num + 2, col_num + 1])
+                if case8:
+                    pic_input[row_num + 2, col_num + 2] = 0
+                    connected_points.append([row_num + 2, col_num + 2])
 
-
-
-
-
+            if len(domain) > area:
+                domain_array = np.array(domain)
+                rotated_rect = cv.minAreaRect(domain_array)
+                # box = cv.boxPoints(rotated_rect)
+                width = rotated_rect[1][0]
+                height = rotated_rect[1][1]
+                if width < height:
+                    width, height = two_switch(width, height)
+                if width > height * WH_Ratio and width > 50:
+                    for index in domain:
+                        pic_input[index[0], index[1]] = 250
 
 
 

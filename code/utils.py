@@ -36,3 +36,13 @@ def canny(_input, _t1, _t2):
     edge = cv.Canny(_input, _t1, _t2)
     return edge
 
+
+def two_switch(param1, param2):
+    """
+    change order of two params
+    :param param1: the first param
+    :param param2: the second param
+    :return: param_2, param_1
+    """
+    return param2, param1
+
