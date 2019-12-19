@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from utils import *
 import copy
 import numpy as np
+from tqdm import tqdm
 
 pic_path = '../data/'
 pics = os.listdir(pic_path)
@@ -26,10 +27,10 @@ pic_edge = canny(pic_grey, canny_factor[0], canny_factor[1])
 # show_matrix("edge", pic_edge)
 
 # dilate:expanding process
-kernel_size = 3     # raise number will get rougher effect
 """ construct process unit: ellipse_shape """
 kernel_pattern = cv.MORPH_ELLIPSE
-kernel = cv.getStructuringElement(kernel_pattern, (kernel_size, kernel_size))
+kernel = cv.getStructuringElement(kernel_pattern, (3, 3))
+# 3 represent kernel size, raise number will get rougher effect
 
 pic_dilate = cv.dilate(pic_edge, kernel)
 show_matrix("dilate", pic_dilate)
@@ -47,16 +48,17 @@ domain = []
 area = 20
 WH_Ratio = 3
 
-for row in pic_input.shape[0]:
-    for col in pic_input.shape[1]:
+for row in tqdm(range(pic_input.shape[0])):
+    for col in range(pic_input.shape[1]):
         if pic_input[row, col] == 255:
-            connected_points.append((row, col))
+            connected_points.append([row, col])
             while len(connected_points) != 0:
                 current_point = connected_points[-1]
                 domain.append(current_point)
                 row_num = current_point[0]
                 col_num = current_point[1]
                 pic_input[row_num, col_num] = 0
+                # print(current_point)
                 connected_points.pop()
 
                 # case1 = row_num-1 >= 0 and col_num-1 >= 0 and pic_input[row_num-1, col_num-1] == 255
@@ -66,9 +68,11 @@ for row in pic_input.shape[0]:
                 # case5 = col_num+1 < pic_input.shape[1] and pic_input[row_num, col_num+1] == 255
                 # case6 = row_num+1 < pic_input.shape[0] and col_num-1 > 0 and pic_input[row_num+1, col_num-1] == 255
                 # case7 = row_num+1 < pic_input.shape[0] and pic_input[row_num+1, col_num] == 255
-                # case8 = row_num+1 < pic_input.shape[0] and col_num+1 < pic_input.shape[1] and pic_input[row_num+1, col_num+1] == 255
+                # case8 = row_num+1 < pic_input.shape[0] and col_num+1 < pic_input.shape[1] and
+                # pic_input[row_num+1, col_num+1] == 255
                 
                 # find a white point
+                # print(row, col)
                 case1 = row_num >= 0 and col_num >= 0 and pic_input[row_num, col_num] == 255
                 # 1 right pixel is white
                 case2 = row_num >= 0 and pic_input[row_num, col_num+1] == 255
@@ -86,27 +90,35 @@ for row in pic_input.shape[0]:
                 case8 = row_num + 2 < pic_input.shape[0] and col_num + 2 < pic_input.shape[1] and pic_input[row_num + 2, col_num + 2] == 255
 
                 if case1:
+                    # print('1')
                     pic_input[row_num, col_num] = 0
                     connected_points.append([row_num, col_num])
                 if case2:
+                    # print('2')
                     pic_input[row_num, col_num+1] = 0
                     connected_points.append([row_num, col_num+1])
                 if case3:
+                    # print('3')
                     pic_input[row_num, col_num + 2] = 0
                     connected_points.append([row_num, col_num + 2])
                 if case4:
+                    # print('4')
                     pic_input[row_num - 1, col_num] = 0
                     connected_points.append([row_num - 1, col_num])
                 if case5:
+                    # print('5')
                     pic_input[row_num + 1, col_num + 2] = 0
                     connected_points.append([row_num + 1, col_num + 2])
                 if case6:
+                    # print('6')
                     pic_input[row_num + 2, col_num] = 0
                     connected_points.append([row_num + 1, col_num + 2])
                 if case7:
+                    # print('7')
                     pic_input[row_num + 2, col_num + 1] = 0
                     connected_points.append([row_num + 2, col_num + 1])
                 if case8:
+                    # print('8')
                     pic_input[row_num + 2, col_num + 2] = 0
                     connected_points.append([row_num + 2, col_num + 2])
 
@@ -121,6 +133,8 @@ for row in pic_input.shape[0]:
                 if width > height * WH_Ratio and width > 50:
                     for index in domain:
                         pic_input[index[0], index[1]] = 250
+                    connected_points.extend(domain)
 
-
+kernel = cv.getStructuringElement(kernel_pattern, (7, 7))
+pic_closed_3 = cv.morphologyEx(pic_input, cv.MORPH_CLOSE, kernel, (-1, 1), iterations=5)
 
