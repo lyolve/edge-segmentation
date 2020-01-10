@@ -49,83 +49,86 @@ domain = []
 area = 20
 WH_Ratio = 3
 
-for row in tqdm(range(pic_input.shape[0])):
-    for col in range(pic_input.shape[1]):
-        if pic_input[row, col] == 255:
-            connected_points.append([row, col])
-            while len(connected_points) != 0:
-                current_point = connected_points[-1]
-                domain.append(current_point)
-                row_num = current_point[0]
-                col_num = current_point[1]
-                pic_input[row_num, col_num] = 0
-                # print(current_point)
-                connected_points.pop()
+input_2 = find_connections(pic_input, area, WH_Ratio)
+kernel = cv.getStructuringElement(kernel_pattern, (3, 3))
+pic_closed_3 = cv.morphologyEx(input_2, cv.MORPH_CLOSE, kernel, (-1, 1), iterations=5)
+show_matrix("test", pic_closed_3)
+#
+# for row in tqdm(range(pic_input.shape[0])):
+#     for col in range(pic_input.shape[1]):
+#         if pic_input[row, col] == 255:
+#             connected_points.append([row, col])
+#             while len(connected_points) != 0:
+#                 current_point = connected_points[-1]
+#                 domain.append(current_point)
+#                 row_num = current_point[0]
+#                 col_num = current_point[1]
+#                 pic_input[row_num, col_num] = 0
+#                 # print(current_point)
+#                 connected_points.pop()
+#
+#                 # find a white point
+#                 # print(row, col)
+#                 case1 = row_num-1 >= 0 and col_num-1 >= 0 and pic_input[row_num-1, col_num-1] == 255
+#                 # 1 right pixel is white
+#                 case2 = row_num-1 >= 0 and pic_input[row_num-1, col_num] == 255
+#                 # col by the right_edge
+#                 case3 = row_num-1 >= 0 and col_num+1 < pic_input.shape[1] and pic_input[row_num-1, col_num+1] == 255
+#                 # 1 up pixel is white
+#                 case4 = col_num-1 >= 0 and pic_input[row_num, col_num-1] == 255
+#                 # col by the right_edge
+#                 case5 = col_num+1 < pic_input.shape[1] and pic_input[row_num, col_num+1] == 255
+#                 # row by the down_edge
+#                 case6 = row_num+1 < pic_input.shape[0] and col_num-1 > 0 and pic_input[row_num+1, col_num-1] == 255
+#                 # 1 right pixel is white
+#                 case7 = row_num+1 < pic_input.shape[0] and pic_input[row_num+1, col_num] == 255
+#                 # right & down corner
+#                 case8 = row_num+1 < pic_input.shape[0] and col_num+1 < pic_input.shape[1] and pic_input[row_num+1, col_num+1] == 255
+#
+#                 if case1:
+#                     # print('1')
+#                     pic_input[row_num-1, col_num-1] = 0
+#                     connected_points.append([row_num-1, col_num-1])
+#                 if case2:
+#                     # print('2')
+#                     pic_input[row_num-1, col_num] = 0
+#                     connected_points.append([row_num-1, col_num])
+#                 if case3:
+#                     # print('3')
+#                     pic_input[row_num-1, col_num+1] = 0
+#                     connected_points.append([row_num-1, col_num+1])
+#                 if case4:
+#                     # print('4')
+#                     pic_input[row_num, col_num-1] = 0
+#                     connected_points.append([row_num, col_num-1])
+#                 if case5:
+#                     # print('5')
+#                     pic_input[row_num, col_num+1] = 0
+#                     connected_points.append([row_num, col_num+1])
+#                 if case6:
+#                     # print('6')
+#                     pic_input[row_num+1, col_num-1] = 0
+#                     connected_points.append([row_num+1, col_num-1])
+#                 if case7:
+#                     # print('7')
+#                     pic_input[row_num+1, col_num] = 0
+#                     connected_points.append([row_num+1, col_num])
+#                 if case8:
+#                     # print('8')
+#                     pic_input[row_num+1, col_num+1] = 0
+#                     connected_points.append([row_num+1, col_num+1])
+#
+#             if len(domain) > area:
+#                 domain_array = np.array(domain)
+#                 rotated_rect = cv.minAreaRect(domain_array)
+#                 # box = cv.boxPoints(rotated_rect)
+#                 width = rotated_rect[1][0]
+#                 height = rotated_rect[1][1]
+#                 if width < height:
+#                     width, height = two_switch(width, height)
+#                 if width > height * WH_Ratio and width > 50:
+#                     for index in domain:
+#                         pic_input[index[0], index[1]] = 250
+#                     connected_points.extend(domain)
 
-                # find a white point
-                # print(row, col)
-                case1 = row_num-1 >= 0 and col_num-1 >= 0 and pic_input[row_num-1, col_num-1] == 255
-                # 1 right pixel is white
-                case2 = row_num-1 >= 0 and pic_input[row_num-1, col_num] == 255
-                # col by the right_edge
-                case3 = row_num-1 >= 0 and col_num+1 < pic_input.shape[1] and pic_input[row_num-1, col_num+1] == 255
-                # 1 up pixel is white
-                case4 = col_num-1 >= 0 and pic_input[row_num, col_num-1] == 255
-                # col by the right_edge
-                case5 = col_num+1 < pic_input.shape[1] and pic_input[row_num, col_num+1] == 255
-                # row by the down_edge
-                case6 = row_num+1 < pic_input.shape[0] and col_num-1 > 0 and pic_input[row_num+1, col_num-1] == 255
-                # 1 right pixel is white
-                case7 = row_num+1 < pic_input.shape[0] and pic_input[row_num+1, col_num] == 255
-                # right & down corner
-                case8 = row_num+1 < pic_input.shape[0] and col_num+1 < pic_input.shape[1] and pic_input[row_num+1, col_num+1] == 255
 
-                if case1:
-                    # print('1')
-                    pic_input[row_num-1, col_num-1] = 0
-                    connected_points.append([row_num-1, col_num-1])
-                if case2:
-                    # print('2')
-                    pic_input[row_num-1, col_num] = 0
-                    connected_points.append([row_num-1, col_num])
-                if case3:
-                    # print('3')
-                    pic_input[row_num-1, col_num+1] = 0
-                    connected_points.append([row_num-1, col_num+1])
-                if case4:
-                    # print('4')
-                    pic_input[row_num, col_num-1] = 0
-                    connected_points.append([row_num, col_num-1])
-                if case5:
-                    # print('5')
-                    pic_input[row_num, col_num+1] = 0
-                    connected_points.append([row_num, col_num+1])
-                if case6:
-                    # print('6')
-                    pic_input[row_num+1, col_num-1] = 0
-                    connected_points.append([row_num+1, col_num-1])
-                if case7:
-                    # print('7')
-                    pic_input[row_num+1, col_num] = 0
-                    connected_points.append([row_num+1, col_num])
-                if case8:
-                    # print('8')
-                    pic_input[row_num+1, col_num+1] = 0
-                    connected_points.append([row_num+1, col_num+1])
-
-            if len(domain) > area:
-                domain_array = np.array(domain)
-                rotated_rect = cv.minAreaRect(domain_array)
-                # box = cv.boxPoints(rotated_rect)
-                width = rotated_rect[1][0]
-                height = rotated_rect[1][1]
-                if width < height:
-                    width, height = two_switch(width, height)
-                if width > height * WH_Ratio and width > 50:
-                    for index in domain:
-                        pic_input[index[0], index[1]] = 250
-                    connected_points.extend(domain)
-
-kernel = cv.getStructuringElement(kernel_pattern, (7, 7))
-pic_closed_3 = cv.morphologyEx(pic_input, cv.MORPH_CLOSE, kernel, (-1, 1), iterations=5)
-show_matrix("test", pic_input)
